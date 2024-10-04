@@ -1,5 +1,5 @@
 <h1>Project  Jetpack Composeku :)</h1>
-Copy<p>Selamat datang di repositoriku ☺️☺️ Repositori ini berisi berbagai aplikasi Kotlin, masing-masing berada dalam branch yang terpisah.</p>
+<p>Selamat datang di repositoriku ☺️☺️ Repositori ini berisi berbagai aplikasi Kotlin, masing-masing berada dalam branch yang terpisah.</p>
 
 <h2>Struktur Repositori</h2>
 
