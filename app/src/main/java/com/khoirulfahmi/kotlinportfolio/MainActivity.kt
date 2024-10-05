@@ -4,37 +4,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.khoirulfahmi.kotlinportfolio.ui.theme.KotlinPortfolioTheme
@@ -45,36 +27,36 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             KotlinPortfolioTheme {
-                 TodoListScreen()
+                TodoListScreen()
             }
         }
     }
 }
 
+data class Task(val id: Int, var text: String, var isCompleted: Boolean = false)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoListScreen() {
-    var tasks by remember { mutableStateOf(listOf<String>()) }
+    var tasks by remember { mutableStateOf(listOf<Task>()) }
     var newTask by remember { mutableStateOf("") }
+    var editingTask by remember { mutableStateOf<Task?>(null) }
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(title = { Text("Todo List") }
-            )
+            CenterAlignedTopAppBar(title = { Text("Todo List") })
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
                     if (newTask.isNotBlank()) {
-                        tasks = tasks + newTask
+                        val newId = (tasks.maxByOrNull { it.id }?.id ?: 0) + 1
+                        tasks = tasks + Task(newId, newTask)
                         newTask = ""
                     }
                 }
             ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = "Add Task", tint = Color.Black )
+                Icon(Icons.Default.Add, contentDescription = "Add Task", tint = Color.Black)
             }
         }
     ) { innerPadding ->
@@ -96,17 +78,40 @@ fun TodoListScreen() {
                 modifier = Modifier.weight(1f)
             ) {
                 items(tasks) { task ->
-                    TaskItem(task = task)
+                    TaskItem(
+                        task = task,
+                        onToggleComplete = { updatedTask ->
+                            tasks = tasks.map { if (it.id == updatedTask.id) updatedTask else it }
+                        },
+                        onEditTask = { editingTask = it },
+                        onDeleteTask = { taskToDelete ->
+                            tasks = tasks.filter { it.id != taskToDelete.id }
+                        }
+                    )
                 }
             }
         }
     }
+
+    editingTask?.let { task ->
+        EditTaskDialog(
+            task = task,
+            onDismissRequest = { editingTask = null },
+            onConfirm = { updatedTask ->
+                tasks = tasks.map { if (it.id == updatedTask.id) updatedTask else it }
+                editingTask = null
+            }
+        )
+    }
 }
 
 @Composable
-fun TaskItem(task: String) {
-    var isCompleted by remember { mutableStateOf(false) }
-
+fun TaskItem(
+    task: Task,
+    onToggleComplete: (Task) -> Unit,
+    onEditTask: (Task) -> Unit,
+    onDeleteTask: (Task) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -120,30 +125,68 @@ fun TaskItem(task: String) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
-                checked = isCompleted,
-                onCheckedChange = { isCompleted = it }
+                checked = task.isCompleted,
+                onCheckedChange = { isChecked ->
+                    onToggleComplete(task.copy(isCompleted = isChecked))
+                }
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = task,
+                text = task.text,
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None
             )
-            if (isCompleted) {
-                Icon(
-                    Icons.Default.Check,
-                    contentDescription = "Completed",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            IconButton(onClick = { onEditTask(task) }) {
+                Icon(Icons.Default.Edit, contentDescription = "Edit")
+            }
+            IconButton(onClick = { onDeleteTask(task) }) {
+                Icon(Icons.Default.Check, contentDescription = "Delete")
             }
         }
     }
 }
 
+@Composable
+fun EditTaskDialog(
+    task: Task,
+    onDismissRequest: () -> Unit,
+    onConfirm: (Task) -> Unit
+) {
+    var editedText by remember { mutableStateOf(task.text) }
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text("Edit Task") },
+        text = {
+            OutlinedTextField(
+                value = editedText,
+                onValueChange = { editedText = it },
+                label = { Text("Task") }
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (editedText.isNotBlank()) {
+                        onConfirm(task.copy(text = editedText))
+                    }
+                }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text("Cancel")
+            }
+        }
+    )
+}
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun TodoListPreview() {
     KotlinPortfolioTheme {
         TodoListScreen()
     }
