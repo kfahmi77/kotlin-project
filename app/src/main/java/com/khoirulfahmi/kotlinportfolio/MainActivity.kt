@@ -59,7 +59,7 @@ fun TodoListScreen() {
                 Icon(Icons.Default.Add, contentDescription = "Add Task", tint = Color.Black)
             }
         }
-    ) { innerPadding ->
+    ) { innerPadding -> 
         Column(
             modifier = Modifier
                 .padding(innerPadding)
