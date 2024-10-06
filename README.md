@@ -9,4 +9,10 @@
     <li>Clone repositori ini ke mesin lokal Anda:
         <pre><code>git clone https://github.com/kfahmi77/kotlin-project.git</code></pre>
     </li>
+     <li>Clone repositori ini ke mesin lokal Anda:
+        Buka menggunakan Android Studio / Intellij
+    </li>
+     <li>
+         Tunggu Beberapa saat untuk mengunduh semua depedensi yang dibutuhkan
+    </li>
 </ol>
