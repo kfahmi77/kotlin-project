@@ -1,6 +1,6 @@
 | Gambar                                 |           |
 |----------------------------------------|----------------|
-| <img src="" ![Screenshot_1728281143](https://github.com/user-attachments/assets/f43f9719-8fb6-491a-a0f2-cc8dec746368)
+| <img src="![Screenshot_1728281143](https://github.com/user-attachments/assets/f43f9719-8fb6-491a-a0f2-cc8dec746368)"
 width="150"> | Home |
 
 <h2>Cara Menggunakan Repositori Ini</h2>
