@@ -56,8 +56,11 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
 
-    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07")
-    implementation ("androidx.compose.runtime:runtime-livedata:1.0.4")
+    implementation (libs.androidx.lifecycle.viewmodel.compose)
+    implementation (libs.androidx.runtime.livedata)
+
+    implementation (libs.androidx.foundation)
+
     implementation (libs.retrofit)
     implementation (libs.converter.gson)
     implementation(libs.androidx.ui)
