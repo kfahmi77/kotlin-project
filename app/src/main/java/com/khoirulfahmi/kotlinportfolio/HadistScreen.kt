@@ -1,43 +1,71 @@
 package com.khoirulfahmi.kotlinportfolio
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun HadithScreen() {
+fun HadithScreen(viewModel: HadithViewModel = viewModel()) {
+    val uiState by viewModel.uiState.collectAsState()
+
     val backgroundColor = Color(0xFFF8F3E6) // Warna krem lembut untuk latar belakang
     val primaryColor = Color(0xFF4CAF50) // Warna hijau untuk aksen
+
+    LaunchedEffect(Unit) {
+        viewModel.loadHadith()
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = backgroundColor
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            HadithCard(
-                arabicText = "مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ",
-                translation = "Barangsiapa menempuh jalan untuk mencari ilmu, maka Allah akan memudahkan baginya jalan menuju surga.",
-                narrator = "Diriwayatkan oleh Muslim",
-                primaryColor = primaryColor
-            )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                when (val state = uiState) {
+                    is HadithUiState.Loading -> CircularProgressIndicator(
+                        color = primaryColor,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    is HadithUiState.Success -> HadithCard(
+                        arabicText = state.content.arab,
+                        translation = state.content.id,
+                        narrator = "HR. Muslim No. ${state.content.number}",
+                        primaryColor = primaryColor
+                    )
+                    is HadithUiState.Error -> Text(
+                        text = state.message,
+                        color = Color.Red,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -52,7 +80,7 @@ fun HadithCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(vertical = 16.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
@@ -93,11 +121,17 @@ fun HadithCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                IconButton(onClick = { /* TODO: Implement share functionality */ }) {
-                    Icon(Icons.Filled.Share, contentDescription = "Share", tint = primaryColor)
+                IconButton(
+                    onClick = { /* TODO: Implement share functionality */ },
+                    modifier = Modifier.semantics { contentDescription = "Bagikan hadits" }
+                ) {
+                    Icon(Icons.Filled.Share, contentDescription = null, tint = primaryColor)
                 }
-                IconButton(onClick = { /* TODO: Implement bookmark functionality */ }) {
-                    Icon(Icons.Filled.Info, contentDescription = "Bookmark", tint = primaryColor)
+                IconButton(
+                    onClick = { /* TODO: Implement bookmark functionality */ },
+                    modifier = Modifier.semantics { contentDescription = "Simpan hadits" }
+                ) {
+                    Icon(Icons.Filled.Info, contentDescription = null, tint = primaryColor)
                 }
             }
         }
