@@ -1,5 +1,6 @@
 package com.khoirulfahmi.kotlinportfolio
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,11 +27,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
@@ -88,7 +89,7 @@ fun HadithCard(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Divider(color = primaryColor.copy(alpha = 0.2f), thickness = 1.dp)
+            HorizontalDivider(thickness = 1.dp, color = primaryColor.copy(alpha = 0.2f))
 
             // Translation
             Text(
@@ -123,15 +124,29 @@ fun HadithCard(
             }
         }
     }
+
 }
 
 @Composable
 fun HadithScreen(viewModel: HadithViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val backgroundColor = Color(0xFFF5F5F5) // Light gray background
-    val primaryColor = Color(0xFF4CAF50) // Green for accent
+    val primaryColor = Color(0xFF4CAF50)
+
+    fun shareHadith() {
+        val shareableContent = viewModel.getShareableHadithContent()
+        if (shareableContent != null) {
+            val sendIntent: Intent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, shareableContent)
+                type = "text/plain"
+            }
+            val shareIntent = Intent.createChooser(sendIntent, null)
+            context.startActivity(shareIntent)
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -159,7 +174,7 @@ fun HadithScreen(viewModel: HadithViewModel = viewModel()) {
                             onChangeCollection = {
                                 viewModel.changeHadisCollection()
                             },
-                            onShare = { /* Implement share functionality */ },
+                            onShare = { shareHadith() },
                             onBookmark = { /* Implement bookmark functionality */ }
                         )
                     }
@@ -171,6 +186,7 @@ fun HadithScreen(viewModel: HadithViewModel = viewModel()) {
             }
         }
     }
+
 }
 
 // ErrorMessage composable remains unchanged

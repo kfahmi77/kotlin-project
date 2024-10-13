@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class HadithViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
     private val _uiState = MutableStateFlow<HadithUiState>(HadithUiState.Loading)
@@ -91,6 +92,25 @@ class HadithViewModel(private val savedStateHandle: SavedStateHandle) : ViewMode
         private const val KEY_HADITH_TRANSLATION = "hadith_translation"
         private const val KEY_HADIS_NAME = "hadis_name"
         private const val KEY_CURRENT_INDEX = "current_index"
+    }
+
+    fun getShareableHadithContent(): String? {
+        val currentState = uiState.value
+        return if (currentState is HadithUiState.Success) {
+            val content = currentState.content
+            val hadisName = currentState.hadisName
+            """      
+            Arab:
+            ${content.arab}
+            
+            Terjemahan:
+            ${content.id}
+            
+            Referensi: HR. ${hadisName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} No. ${content.number}
+            """.trimIndent()
+        } else {
+            null
+        }
     }
 }
 
