@@ -162,7 +162,7 @@ fun HadithScreen(
     Scaffold(
         topBar = {
             SmallTopAppBar(
-                title = { Text("Hadis Acak") },
+                title = { Text("Hadits Harian") },
                 actions = {
                     IconButton(onClick = onNavigateToFavorites) {
                         Icon(Icons.Filled.Favorite, contentDescription = "Lihat Favorit")
