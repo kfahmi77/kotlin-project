@@ -15,13 +15,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallTopAppBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,10 +49,11 @@ fun HadithCard(
     arabicText: String,
     translation: String,
     narrator: String,
+    isFavorite: Boolean,
     primaryColor: Color,
     onChangeCollection: () -> Unit,
     onShare: () -> Unit,
-    onBookmark: () -> Unit
+    onToggleFavorite: () -> Unit
 ) {
     val cardShape = RoundedCornerShape(16.dp)
 
@@ -116,19 +121,25 @@ fun HadithCard(
                     Icon(Icons.Filled.Refresh, contentDescription = null, tint = primaryColor)
                 }
                 IconButton(
-                    onClick = onBookmark,
-                    modifier = Modifier.semantics { contentDescription = "Simpan hadits" }
+                    onClick = onToggleFavorite,
+                    modifier = Modifier.semantics { contentDescription = "Toggle favorit" }
                 ) {
-                    Icon(Icons.Filled.Favorite, contentDescription = null, tint = primaryColor)
+                    Icon(
+                        if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = null,
+                        tint = if (isFavorite) Color.Red else primaryColor
+                    )
                 }
             }
         }
     }
-
 }
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HadithScreen(viewModel: HadithViewModel = viewModel()) {
+fun HadithScreen(
+    viewModel: HadithViewModel = viewModel(),
+    onNavigateToFavorites: () -> Unit
+) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
@@ -148,48 +159,61 @@ fun HadithScreen(viewModel: HadithViewModel = viewModel()) {
         }
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = backgroundColor
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            when (val state = uiState) {
-                is HadithUiState.Loading -> CircularProgressIndicator(
-                    color = primaryColor,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-                is HadithUiState.Success -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        HadithCard(
-                            arabicText = state.content.arab,
-                            translation = state.content.id,
-                            narrator = "HR. ${state.hadisName.replaceFirstChar {
-                                if (it.isLowerCase()) it.titlecase() else it.toString()
-                            }} No. ${state.content.number}",
-                            primaryColor = primaryColor,
-                            onChangeCollection = {
-                                viewModel.changeHadisCollection()
-                            },
-                            onShare = { shareHadith() },
-                            onBookmark = { /* Implement bookmark functionality */ }
-                        )
+    Scaffold(
+        topBar = {
+            SmallTopAppBar(
+                title = { Text("Hadis Acak") },
+                actions = {
+                    IconButton(onClick = onNavigateToFavorites) {
+                        Icon(Icons.Filled.Favorite, contentDescription = "Lihat Favorit")
                     }
                 }
-                is HadithUiState.Error -> ErrorMessage(
-                    message = state.message,
-                    modifier = Modifier.align(Alignment.Center)
-                )
+            )
+        }
+    ) { paddingValues ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            color = backgroundColor
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                when (val state = uiState) {
+                    is HadithUiState.Loading -> CircularProgressIndicator(
+                        color = primaryColor,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                    is HadithUiState.Success -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            HadithCard(
+                                arabicText = state.content.arab,
+                                translation = state.content.id,
+                                narrator = "HR. ${state.hadisName.replaceFirstChar {
+                                    if (it.isLowerCase()) it.titlecase() else it.toString()
+                                }} No. ${state.content.number}",
+                                isFavorite = state.isFavorite,
+                                primaryColor = primaryColor,
+                                onChangeCollection = {
+                                    viewModel.changeHadisCollection()
+                                },
+                                onShare = { shareHadith() },
+                                onToggleFavorite = { viewModel.toggleFavorite() }
+                            )
+                        }
+                    }
+                    is HadithUiState.Error -> ErrorMessage(
+                        message = state.message,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
             }
         }
     }
-
 }
-
-// ErrorMessage composable remains unchanged
 
 @Composable
 fun ErrorMessage(message: String, modifier: Modifier = Modifier) {

@@ -1,16 +1,27 @@
 package com.khoirulfahmi.kotlinportfolio
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.Locale
 
-class HadithViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
+class HadithViewModel(
+    application: Application,
+    private val savedStateHandle: SavedStateHandle
+) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<HadithUiState>(HadithUiState.Loading)
     val uiState: StateFlow<HadithUiState> = _uiState
+
+    private val database = HadithDatabase.getInstance(application)
+    private val favoriteDao = database.favoriteHadithDao()
+
+    val favoriteHadiths = favoriteDao.getAllFavorites()
+
 
     private val hadisList = listOf(
         "muslim", "bukhari", "tirmidzi", "nasai", "abu-daud",
@@ -30,7 +41,9 @@ class HadithViewModel(private val savedStateHandle: SavedStateHandle) : ViewMode
 
         if (savedNumber != null && savedArabic != null && savedTranslation != null && savedHadisName != null) {
             val savedContent = HadithContent(savedNumber, savedArabic, savedTranslation)
-            _uiState.value = HadithUiState.Success(savedContent, savedHadisName)
+            checkIfFavorite(savedHadisName, savedNumber) { isFavorite ->
+                _uiState.value = HadithUiState.Success(savedContent, savedHadisName, isFavorite)
+            }
         } else {
             currentHadisIndex = savedIndex
             loadRandomHadith()
@@ -41,7 +54,7 @@ class HadithViewModel(private val savedStateHandle: SavedStateHandle) : ViewMode
         get() = savedStateHandle.get<Int>(KEY_CURRENT_INDEX) ?: 0
         set(value) = savedStateHandle.set(KEY_CURRENT_INDEX, value)
 
-    fun loadRandomHadith() {
+    private fun loadRandomHadith() {
         viewModelScope.launch {
             _uiState.value = HadithUiState.Loading
             try {
@@ -49,7 +62,9 @@ class HadithViewModel(private val savedStateHandle: SavedStateHandle) : ViewMode
                 val randomNumber = getRandomNumberForHadis(hadisName)
                 val response = RetrofitClient.instance.getHadith(hadisName, randomNumber)
                 val content = response.data.contents
-                _uiState.value = HadithUiState.Success(content, hadisName)
+                checkIfFavorite(hadisName, content.number) { isFavorite ->
+                    _uiState.value = HadithUiState.Success(content, hadisName, isFavorite)
+                }
                 // Save the fetched data
                 savedStateHandle.set(KEY_HADITH_NUMBER, content.number)
                 savedStateHandle.set(KEY_HADITH_ARABIC, content.arab)
@@ -71,6 +86,49 @@ class HadithViewModel(private val savedStateHandle: SavedStateHandle) : ViewMode
         loadRandomHadith()
     }
 
+    fun toggleFavorite() {
+        val currentState = uiState.value
+        if (currentState is HadithUiState.Success) {
+            viewModelScope.launch {
+                val content = currentState.content
+                val hadisName = currentState.hadisName
+                val id = "${hadisName}_${content.number}"
+                val existingFavorite = favoriteDao.getFavoriteById(id)
+
+                if (existingFavorite == null) {
+                    // Add to favorites
+                    val favoriteHadith = FavoriteHadith(
+                        id = id,
+                        hadisName = hadisName,
+                        number = content.number,
+                        arab = content.arab,
+                        translation = content.id
+                    )
+                    favoriteDao.insertFavorite(favoriteHadith)
+                    _uiState.value = currentState.copy(isFavorite = true)
+                } else {
+                    // Remove from favorites
+                    favoriteDao.deleteFavorite(existingFavorite)
+                    _uiState.value = currentState.copy(isFavorite = false)
+                }
+            }
+        }
+    }
+
+    private fun checkIfFavorite(hadisName: String, number: Int, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val id = "${hadisName}_$number"
+            val isFavorite = favoriteDao.getFavoriteById(id) != null
+            onResult(isFavorite)
+        }
+    }
+
+    fun removeFavorite(favoriteHadith: FavoriteHadith) {
+        viewModelScope.launch {
+            favoriteDao.deleteFavorite(favoriteHadith)
+        }
+    }
+
     private fun getRandomNumberForHadis(hadisName: String): Int {
         return when (hadisName) {
             "muslim" -> (1..5329).random()
@@ -84,14 +142,6 @@ class HadithViewModel(private val savedStateHandle: SavedStateHandle) : ViewMode
             "malik" -> (1..1594).random()
             else -> 1 // Default range
         }
-    }
-
-    companion object {
-        private const val KEY_HADITH_NUMBER = "hadith_number"
-        private const val KEY_HADITH_ARABIC = "hadith_arabic"
-        private const val KEY_HADITH_TRANSLATION = "hadith_translation"
-        private const val KEY_HADIS_NAME = "hadis_name"
-        private const val KEY_CURRENT_INDEX = "current_index"
     }
 
     fun getShareableHadithContent(): String? {
@@ -112,10 +162,27 @@ class HadithViewModel(private val savedStateHandle: SavedStateHandle) : ViewMode
             null
         }
     }
+    fun getFavoriteHadithById(id: String?): FavoriteHadith? {
+        return runBlocking {
+            id?.let { favoriteDao.getFavoriteById(it) }
+        }
+    }
+
+    companion object {
+        private const val KEY_HADITH_NUMBER = "hadith_number"
+        private const val KEY_HADITH_ARABIC = "hadith_arabic"
+        private const val KEY_HADITH_TRANSLATION = "hadith_translation"
+        private const val KEY_HADIS_NAME = "hadis_name"
+        private const val KEY_CURRENT_INDEX = "current_index"
+    }
 }
 
 sealed class HadithUiState {
     data object Loading : HadithUiState()
-    data class Success(val content: HadithContent, val hadisName: String) : HadithUiState()
+    data class Success(
+        val content: HadithContent,
+        val hadisName: String,
+        val isFavorite: Boolean
+    ) : HadithUiState()
     data class Error(val message: String) : HadithUiState()
 }

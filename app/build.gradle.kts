@@ -60,8 +60,15 @@ dependencies {
     implementation (libs.androidx.lifecycle.viewmodel.compose)
     implementation (libs.androidx.runtime.livedata)
 
-    implementation(libs.androidx.room.ktx)
+    implementation (libs.androidx.room.ktx)
+    implementation (libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
+
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.runtime.livedata)
 
 
     implementation (libs.androidx.navigation.compose)

@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.khoirulfahmi.kotlinportfolio.ui.theme.KotlinPortfolioTheme
 
 class MainActivity : ComponentActivity() {
@@ -11,8 +12,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            val viewModel: HadithViewModel = viewModel()
             KotlinPortfolioTheme {
-                HadithScreen()
+              AppNavigation(viewModel)
             }
         }
     }
