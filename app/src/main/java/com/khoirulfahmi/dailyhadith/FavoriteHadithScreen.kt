@@ -1,4 +1,4 @@
-package com.khoirulfahmi.kotlinportfolio
+package com.khoirulfahmi.dailyhadith
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn

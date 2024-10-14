@@ -1,4 +1,4 @@
-package com.khoirulfahmi.kotlinportfolio
+package com.khoirulfahmi.dailyhadith
 
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement

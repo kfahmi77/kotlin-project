@@ -1,4 +1,4 @@
-package com.khoirulfahmi.kotlinportfolio
+package com.khoirulfahmi.dailyhadith
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

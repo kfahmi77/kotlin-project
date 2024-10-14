@@ -1,6 +1,5 @@
-package com.khoirulfahmi.kotlinportfolio.ui.theme
+package com.khoirulfahmi.dailyhadith.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

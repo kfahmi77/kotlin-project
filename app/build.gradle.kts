@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "com.khoirulfahmi.kotlinportfolio"
-    compileSdk = 34
+    namespace = "com.khoirulfahmi.dailyhadith"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.khoirulfahmi.kotlinportfolio"
+        applicationId = "com.khoirulfahmi.dailyhadith"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 

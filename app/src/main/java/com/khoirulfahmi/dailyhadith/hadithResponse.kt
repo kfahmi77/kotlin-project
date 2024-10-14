@@ -1,4 +1,4 @@
-package com.khoirulfahmi.kotlinportfolio
+package com.khoirulfahmi.dailyhadith
 
 data class HadithResponse(
     val code: Int,

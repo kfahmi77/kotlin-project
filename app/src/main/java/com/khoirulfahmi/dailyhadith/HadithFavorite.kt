@@ -1,4 +1,4 @@
-package com.khoirulfahmi.kotlinportfolio
+package com.khoirulfahmi.dailyhadith
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

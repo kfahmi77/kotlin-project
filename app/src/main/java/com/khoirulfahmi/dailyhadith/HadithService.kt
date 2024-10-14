@@ -1,4 +1,4 @@
-package com.khoirulfahmi.kotlinportfolio
+package com.khoirulfahmi.dailyhadith
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

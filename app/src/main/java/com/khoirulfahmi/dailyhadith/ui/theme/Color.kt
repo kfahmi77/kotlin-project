@@ -1,4 +1,4 @@
-package com.khoirulfahmi.kotlinportfolio.ui.theme
+package com.khoirulfahmi.dailyhadith.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
